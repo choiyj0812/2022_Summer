@@ -1,0 +1,77 @@
+#define X_DIR 21  //PC5
+#define X_STEP 15 //PD7
+#define XY_EN 14  //PD6
+//----------------------------------
+#define Y_DIR 23  //PC7
+#define Y_STEP 22 //PC6
+
+void Setup_X(){
+  pinMode(X_DIR, OUTPUT);
+  pinMode(X_STEP, OUTPUT);
+  pinMode(XY_EN, OUTPUT);
+  digitalWrite(X_DIR, LOW);
+  digitalWrite(X_STEP, LOW);
+  digitalWrite(XY_EN, HIGH);
+}
+
+void Setup_Y(){
+  pinMode(Y_DIR, OUTPUT);
+  pinMode(Y_STEP, OUTPUT);
+  pinMode(XY_EN, OUTPUT);
+  digitalWrite(Y_DIR, LOW);
+  digitalWrite(Y_STEP, LOW);
+  digitalWrite(XY_EN, HIGH);
+}
+
+//distance(mm)
+void Active_X(bool tf, int distance){
+  digitalWrite(XY_EN, LOW);
+  if(tf == true) digitalWrite(X_DIR, LOW);
+  else if(tf == false) digitalWrite(X_DIR, HIGH);
+  //----------------------------------
+  for(int i=0;i<distance*80;i++){
+    digitalWrite(X_STEP, LOW);
+    delayMicroseconds(200);
+    digitalWrite(X_STEP, HIGH);
+    delayMicroseconds(200);
+  }
+}
+
+//distance(mm)
+void Active_Y(bool tf, int distance){
+  digitalWrite(XY_EN, LOW);
+  if(tf == true) digitalWrite(Y_DIR, LOW);
+  else if(tf == false) digitalWrite(Y_DIR, HIGH);
+  //----------------------------------
+  for(int i=0;i<distance*80;i++){
+    digitalWrite(Y_STEP, LOW);
+    delayMicroseconds(200);
+    digitalWrite(Y_STEP, HIGH);
+    delayMicroseconds(200);
+  }
+}
+
+//tf1,tf2 : x,y축의 진행방향 / X,Y : x,y의 비율
+void Active_XY(bool tf1, bool tf2, int X, int Y, int distance){
+  digitalWrite(XY_EN, LOW);
+  if(tf1 == true) digitalWrite(X_DIR, LOW);
+  else if(tf1 == false) digitalWrite(X_DIR, HIGH);
+  if(tf2 == true) digitalWrite(Y_DIR, LOW);
+  else if(tf2 == false) digitalWrite(Y_DIR, HIGH);
+  //----------------------------------
+  //X에는 정비례, Y에는 반비례 
+  for(int i=0;i<(distance*80)*X/(2*Y);i++){
+    for(int j=0; j<=X; j++){
+      digitalWrite(X_STEP, LOW);
+      delayMicroseconds(200);
+      digitalWrite(X_STEP, HIGH);
+      delayMicroseconds(200);
+    }
+    for(int j=0; j<=Y; j++){
+      digitalWrite(Y_STEP, LOW);
+      delayMicroseconds(200);
+      digitalWrite(Y_STEP, HIGH);
+      delayMicroseconds(200);
+    }
+  }
+}

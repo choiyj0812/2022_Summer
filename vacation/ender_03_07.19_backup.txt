@@ -1,0 +1,331 @@
+#define beeper 27 //PA4
+
+#define X_DIR 21  //PC5
+#define X_STEP 15 //PD7
+#define XY_EN 14  //PD6
+//----------------------------------
+#define Y_DIR 23  //PC7
+#define Y_STEP 22 //PC6
+//----------------------------------
+#define X_STOP 18 //PC2
+#define Y_STOP 19 //PC3
+
+void Setup_X(){
+  pinMode(X_DIR, OUTPUT);
+  pinMode(X_STEP, OUTPUT);
+  pinMode(XY_EN, OUTPUT);
+  digitalWrite(X_DIR, LOW);
+  digitalWrite(X_STEP, LOW);
+  digitalWrite(XY_EN, HIGH);
+}
+
+void Setup_Y(){
+  pinMode(Y_DIR, OUTPUT);
+  pinMode(Y_STEP, OUTPUT);
+  pinMode(XY_EN, OUTPUT);
+  digitalWrite(Y_DIR, LOW);
+  digitalWrite(Y_STEP, LOW);
+  digitalWrite(XY_EN, HIGH);
+}
+
+#define PI 3.14
+unsigned long curr_millis = 0;
+unsigned long prev_millis = 0;
+unsigned long prev_millis_1 = 0;
+
+unsigned long curr_micros = 0;
+unsigned long prev_micros = 0;
+unsigned long prev_micros_y = 0;
+
+int count_buz = 0;
+int duty = 1;
+
+uint8_t toggle_motor_x = 0;
+int motor_count_x = 0;
+uint8_t motor_x_stop = 0;
+uint8_t toggle_dir_X = 0;
+
+uint8_t toggle_motor_y = 0;
+int motor_count_y = 0;
+uint8_t motor_y_stop = 0;
+uint8_t toggle_dir_Y = 0;
+
+uint8_t states = 0;
+
+void setup() {
+  Serial.begin(9600);
+  //----------------------------------
+  pinMode(beeper, OUTPUT);
+  digitalWrite(beeper, LOW);
+
+  pinMode(X_STOP, INPUT);
+  pinMode(Y_STOP, INPUT);
+  
+  //=======================================================
+  //Timer2
+  /*TCCR2A = 0x00;  // Normal Mode
+  TCCR2B = 0x03;  // 0x02 : 8분주, 0x03 : 32분주
+  TCNT2 = 156;
+  TIMSK2 = 0x01;  // 0x01 : Overflow Interrupt*/
+
+  //=======================================================
+  //Timer1
+  /*TCCR1A = 0x00;
+  TCCR1B = 0x02;  //0x02 : 8분주 = 0.5us
+  TCCR1C = 0x00;
+  TCNT1 = 65536 - 400;
+  //400 : 400 * 0.5us => 200us마다 인터럽트 발생
+  //65536 = 2^16
+  TIMSK1 = 0x01;*/
+
+  TCCR1A = 0x00;
+  TCCR1B = 0x0A;  //0x02 : 8분주 = 0.5us
+  TCCR1C = 0x00;
+  TCNT1 = 0;
+  OCR1A = 400;
+  TIMSK1 = 0x02;
+  //0x01 : overflow interrupt, 0x02 : compare match interrupt A
+
+  //Timer3
+  TCCR3A = 0x00;
+  TCCR3B = 0x0A;  //0x02 : 8분주 = 0.5us
+  TCCR3C = 0x00;
+  TCNT3 = 0;
+  OCR3A = 400;
+  TIMSK3 = 0x02;
+  //0x01 : overflow interrupt, 0x02 : compare match interrupt A
+  
+  //=======================================================
+  Setup_X();
+  Setup_Y();
+  digitalWrite(X_DIR, LOW);
+  digitalWrite(Y_DIR, LOW);
+  digitalWrite(XY_EN, LOW);
+
+  digitalWrite(X_DIR, HIGH);
+  digitalWrite(Y_DIR, HIGH);
+  
+  while(1){
+    if(digitalRead(X_STOP) == 1){
+      motor_x_stop = 1;
+    }
+    if(digitalRead(Y_STOP) == 1){
+      motor_y_stop = 1;
+    }
+    //curr_millis = millis();
+    //curr_micros = micros();
+    /*if(curr_millis - prev_millis > 1000){
+      prev_millis = curr_millis;
+      Serial.println("1sec");
+    }*/
+
+    /*if(curr_millis - prev_millis_1 > 10){
+      prev_millis_1 = curr_millis;
+      duty++;
+      if(duty == 99) duty = 1;
+    }
+    if(curr_micros - prev_micros > 100){
+      count_buz++;
+      if(count_buz == 100){
+        count_buz = 0;
+        digitalWrite(beeper, HIGH);
+      }
+      else if(count_buz == duty) digitalWrite(beeper, LOW);
+    }*/
+
+    //-------------------------------------
+
+    /*if(curr_millis - prev_millis_1 > 3000){
+      prev_millis_1 = curr_millis;
+
+//      if(states == 0){
+//        digitalWrite(X_DIR, LOW);
+//        motor_x_stop = 0;
+//        motor_y_stop = 1;
+//      }
+//      else if(states == 1){
+//        digitalWrite(Y_DIR, LOW);
+//        motor_x_stop = 1;
+//        motor_y_stop = 0;
+//      }
+//      else if(states == 2){
+//        digitalWrite(X_DIR, HIGH);
+//        motor_x_stop = 0;
+//        motor_y_stop = 1;
+//      }
+//      else{
+//        digitalWrite(Y_DIR, HIGH);
+//        motor_x_stop = 1;
+//        motor_y_stop = 0;
+//      }
+//
+//      states++;
+//      if(states == 4) states = 0;
+
+      //-------------------------------------
+      
+      if(toggle_dir_X == 0){
+        toggle_dir_X = 1;
+        digitalWrite(X_DIR, LOW);
+        motor_x_stop = 0;
+      }
+      else{
+        toggle_dir_X = 0;
+        digitalWrite(X_DIR, HIGH);
+        motor_x_stop = 0;
+      }
+
+      if(toggle_dir_Y == 0){
+        toggle_dir_Y = 1;
+        digitalWrite(Y_DIR, LOW);
+        motor_y_stop = 0;
+      }
+      else{
+        toggle_dir_Y = 0;
+        digitalWrite(Y_DIR, HIGH);
+        motor_y_stop = 0;
+      }
+    }*/
+
+    /*if(motor_x_stop == false){
+      if(curr_micros - prev_micros > 200){
+        prev_micros = curr_micros;
+        if(toggle_motor_x == false){
+          toggle_motor_x = true;
+          digitalWrite(X_STEP, HIGH);
+  
+          motor_count_x++;
+          if(motor_count_x == 4000){
+            motor_count_x = 0;
+            motor_x_stop = true;
+          }
+        }
+        else{
+          toggle_motor_x = false;
+          digitalWrite(X_STEP, LOW);
+        }
+      }
+    }*/
+
+    /*if(motor_y_stop == 0){
+      if(curr_micros - prev_micros_y > 200){
+        prev_micros_y = curr_micros;
+        if(toggle_motor_y == 0){
+          toggle_motor_y = 1;
+          digitalWrite(Y_STEP, HIGH);
+  
+          motor_count_y++;
+          if(motor_count_y == 4000){
+            motor_count_y = 0;
+            motor_y_stop = 1;
+          }
+        }
+        else{
+          toggle_motor_y = 0;
+          digitalWrite(Y_STEP, LOW);
+        }
+      }
+    }*/
+  }
+
+
+  
+  //=======================================================
+  /*double radian = 0;
+  double degree_1 = 60.0;
+  double degree_to_radian = ((degree_1 / 360.0) * (2 * PI));
+  double distance_b = 5 * cos(degree_to_radian);
+  double distance_c = 5 * sin(degree_to_radian);
+  Serial.println(distance_b);
+  Serial.println(distance_c);
+  
+  while(1);*/
+  //=======================================================
+  /*Setup_X();
+  Setup_Y();
+  Active_X(true);
+  Active_XY(false, true, 1, 2);
+  Active_XY(false, false, 1, 2);*/
+}
+
+void loop() {
+  
+}
+
+//SIGNAL(TIMER2_OVF_vect){
+//SIGNAL(TIMER1_OVF_vect){
+SIGNAL(TIMER1_COMPA_vect){
+  //TCNT1 = 65536 - 400;
+  
+  if(motor_x_stop == 0){
+    if(toggle_motor_x == 0){
+      toggle_motor_x = 1;
+      digitalWrite(X_STEP, HIGH);
+  
+      /*motor_count_x++;
+      if(motor_count_x == 4000){
+        motor_count_x = 0;
+        motor_x_stop = 1;
+      }*/
+    }
+    else{
+      toggle_motor_x = 0;
+      digitalWrite(X_STEP, LOW);
+    }
+  }
+  else if(motor_x_stop + motor_y_stop == 2){
+    digitalWrite(X_DIR, LOW);
+    if(toggle_motor_x == 0){
+      toggle_motor_x = 1;
+      digitalWrite(X_STEP, HIGH);
+  
+      motor_count_x++;
+      if(motor_count_x == 4000){
+        motor_count_x = 0;
+        motor_x_stop = 2;
+      }
+    }
+    else{
+      toggle_motor_x = 0;
+      digitalWrite(X_STEP, LOW);
+    }
+  }
+}
+
+SIGNAL(TIMER3_COMPA_vect){
+  //TCNT1 = 65536 - 400;
+  
+  if(motor_y_stop == 0){
+    if(toggle_motor_y == 0){
+      toggle_motor_y = 1;
+      digitalWrite(Y_STEP, HIGH);
+  
+      /*motor_count_y++;
+      if(motor_count_y == 4000){
+        motor_count_y = 0;
+        motor_y_stop = 1;
+      }*/
+    }
+    else{
+      toggle_motor_y = 0;
+      digitalWrite(Y_STEP, LOW);
+    }
+  }
+  else if(motor_x_stop + motor_y_stop == 2){
+    digitalWrite(Y_DIR, LOW);
+    if(toggle_motor_y == 0){
+      toggle_motor_y = 1;
+      digitalWrite(Y_STEP, HIGH);
+  
+      motor_count_y++;
+      if(motor_count_y == 4000){
+        motor_count_y = 0;
+        motor_y_stop = 2;
+      }
+    }
+    else{
+      toggle_motor_y = 0;
+      digitalWrite(Y_STEP, LOW);
+    }
+  }
+}
